@@ -1,0 +1,11 @@
+.env
+.git
+node_modules
+storage/logs/*
+storage/framework/sessions/*
+storage/framework/cache/*
+storage/framework/views/*
+tests/
+*.md
+.dockerignore
+.gitignore

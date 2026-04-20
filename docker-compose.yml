@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: docker/php/Dockerfile
+      dockerfile: Dockerfile
       target: ${APP_ENV:-development}  # ← Chave mágica!
     container_name: laravel_app_${APP_ENV:-dev}
     volumes:
