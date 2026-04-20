@@ -1,6 +1,8 @@
 # Dockerfile (na raiz do projeto)
 FROM php:8.3-fpm-alpine
 
+ENV APP_ENV=production
+
 # Instala Node.js, NPM, Nginx e dependências do PHP
 RUN apk add --no-cache \
     nginx \

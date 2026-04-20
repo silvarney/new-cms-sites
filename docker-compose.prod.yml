@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: production  # Usa o estágio de produção do Dockerfile
     container_name: new-cms-app
     restart: always  # Reinicia automaticamente se falhar
     environment:
