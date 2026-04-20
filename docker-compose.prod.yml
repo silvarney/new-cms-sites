@@ -4,13 +4,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production  # Usa o estágio de produção do Dockerfile
     container_name: new-cms-app
     restart: always  # Reinicia automaticamente se falhar
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
-      - APP_URL=${APP_URL:-https://seudominio.com}
+      - APP_URL=${APP_URL}
       - APP_KEY=${APP_KEY}
       
       # Banco de dados
@@ -127,7 +126,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
     container_name: new-cms-worker
     restart: always
     command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
@@ -155,7 +153,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
     container_name: new-cms-scheduler
     restart: always
     command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
