@@ -1,78 +1,63 @@
-# docker/php/Dockerfile
-FROM php:8.3-fpm AS base
+# Dockerfile (na raiz do projeto)
+FROM php:8.3-fpm-alpine
 
-# Configurações base (comuns a todos ambientes)
-RUN apt-get update && apt-get install -y \
-    git \
+# Instala Node.js, NPM, Nginx e dependências do PHP
+RUN apk add --no-cache \
+    nginx \
+    nodejs \
+    npm \
     curl \
-    zip \
+    git \
     unzip \
     libzip-dev \
     libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    nodejs \
-    npm \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    libjpeg-turbo-dev \
+    freetype-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) pdo_mysql zip gd
 
 # Instala Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Define diretório de trabalho
 WORKDIR /var/www/html
 
-# ============================================
-# ESTÁGIO DE DESENVOLVIMENTO
-# ============================================
-FROM base AS development
+# Copia arquivos de dependência primeiro (melhora cache)
+COPY src/composer.json src/composer.lock* ./
+COPY src/package*.json ./
 
-# Configurações para desenvolvimento
-ENV APP_ENV=local
-ENV APP_DEBUG=true
+# Instala dependências PHP e Node
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN npm ci --production --no-audit --no-fund || npm install --production --no-audit --no-fund
 
-# Instala XDebug (só em desenvolvimento)
-RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug
-
-# Cria script de entrada que instala dependências dinamicamente
-COPY docker/php/entrypoint-dev.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Garante permissões corretas
-RUN mkdir -p storage bootstrap/cache \
-    && chown -R www-data:www-data . \
-    && chmod -R 775 storage bootstrap/cache
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["php-fpm"]
-
-# ============================================
-# ESTÁGIO DE PRODUÇÃO
-# ============================================
-FROM base AS production
-
-# Configurações para produção
-ENV APP_ENV=production
-ENV APP_DEBUG=false
-
-# Copia apenas o necessário (otimizado)
+# Copia o resto do código
 COPY src/ .
 
-# Instala dependências em modo produção
-RUN composer install --no-dev --optimize-autoloader --no-interaction \
-    && npm install --production --no-audit --no-fund \
-    && npm run build
+# Build dos assets Vue
+RUN npm run build
 
-# Limpa arquivos desnecessários
-RUN rm -rf node_modules \
-    && apt-get purge -y nodejs npm \
-    && apt-get autoremove -y
+# Configuração do Nginx
+RUN rm -rf /etc/nginx/conf.d/default.conf
+COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 
-# Ajusta permissões
-RUN mkdir -p storage bootstrap/cache \
-    && chown -R www-data:www-data . \
-    && chmod -R 775 storage bootstrap/cache \
-    && chmod -R 775 bootstrap/cache
+# Cria pastas necessárias e ajusta permissões
+RUN mkdir -p storage/framework/sessions \
+    && mkdir -p storage/framework/views \
+    && mkdir -p storage/framework/cache \
+    && mkdir -p bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache
 
-CMD ["php-fpm"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost/up || exit 1
+
+# Expõe porta 80
+EXPOSE 80
+
+# Script de entrada
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm", "-D", "&&", "nginx", "-g", "daemon off;"]
