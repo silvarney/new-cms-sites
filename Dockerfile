@@ -31,8 +31,8 @@ COPY src/package*.json ./
 # Instala dependências PHP e Node
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Executa os scripts manualmente depois
-RUN php artisan package:discover --ansi
+# Troque a linha do package:discover por:
+RUN php artisan package:discover --ansi || cat storage/logs/laravel.log
 
 # Copia o resto do código
 COPY src/ .
