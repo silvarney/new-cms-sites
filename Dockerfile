@@ -28,13 +28,11 @@ WORKDIR /var/www/html
 COPY src/composer.json src/composer.lock* ./
 COPY src/package*.json ./
 
-# Cria .env temporário para o composer install
-RUN echo "APP_ENV=production" > .env && \
-    echo "APP_KEY=base64:1234567890abcdefghijklmnopqrstuv=" >> .env
-
 # Instala dependências PHP e Node
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-RUN npm ci --production --no-audit --no-fund || npm install --production --no-audit --no-fund
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Executa os scripts manualmente depois
+RUN php artisan package:discover --ansi
 
 # Copia o resto do código
 COPY src/ .
