@@ -4,11 +4,11 @@ WORKDIR /app
 
 COPY src/package*.json ./
 
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 COPY src/ .
 
-RUN npm run build 2>&1
+RUN npm run build 2>&1; exit_code=$?; if [ $exit_code -ne 0 ]; then echo "=== BUILD FAILED ==="; cat /app/npm-debug.log 2>/dev/null || true; exit $exit_code; fi
 
 FROM php:8.3-fpm-alpine
 
