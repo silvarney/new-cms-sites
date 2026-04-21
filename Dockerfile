@@ -5,7 +5,7 @@ FROM php:8.3-fpm-alpine
 RUN apk add --no-cache \
     nginx \
     nodejs \
-    npm \
+    npm --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/main \
     curl \
     git \
     unzip \
@@ -38,6 +38,7 @@ RUN php artisan config:cache
 RUN php artisan route:cache
 RUN php artisan view:cache
 
+RUN node -v && npm -v
 # 5. Build do Vue
 RUN npm run build
 
