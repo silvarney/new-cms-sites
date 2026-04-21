@@ -1,5 +1,5 @@
 {
-    "buildCommand": "composer install --no-dev --optimize-autoloader && npm ci && npm run build",
+    "buildCommand": "composer install --no-dev --optimize-autoloader",
     "startCommand": "php-fpm -D && nginx -g 'daemon off;'",
     "variables": {
         "APP_ENV": "production",
