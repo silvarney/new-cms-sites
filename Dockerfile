@@ -5,11 +5,11 @@ WORKDIR /app
 
 COPY src/package*.json ./
 
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 COPY src/ .
 
-RUN npm run build
+RUN npm run build 2>&1
 
 # ESTÁGIO 2: PHP com Nginx
 FROM php:8.3-fpm-alpine
