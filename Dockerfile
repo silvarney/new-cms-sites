@@ -3,7 +3,10 @@ FROM php:8.3-fpm-alpine
 RUN apk add --no-cache nginx curl git unzip \
     libzip-dev libpng-dev libjpeg-turbo-dev freetype-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) pdo_mysql zip gd
+    && docker-php-ext-install -j$(nproc) pdo_mysql zip gd \
+    && echo "[www]" > /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo "listen = 127.0.0.1:9000" >> /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo "listen.mode = 0660" >> /usr/local/etc/php-fpm.d/zz-docker.conf
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
