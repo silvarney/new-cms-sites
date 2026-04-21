@@ -20,7 +20,7 @@ RUN php artisan package:discover --ansi && \
     php artisan route:cache && \
     php artisan view:cache
 
-RUN rm -rf /etc/nginx/conf.d/default.conf
+RUN rm -rf /etc/nginx/http.d/default.conf
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 
 RUN mkdir -p storage/framework/sessions \

@@ -4,8 +4,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: new-cms-app
-    restart: always  # Reinicia automaticamente se falhar
+container_name: new-cms-app
+    restart: always
+    ports:
+      - "80:80"
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
@@ -51,32 +53,32 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Servidor Web (Nginx)
-  web:
-    image: nginx:stable-alpine
-    container_name: new-cms-web
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"  # Para SSL
-    volumes:
-      # Código fonte (read-only por segurança)
-      - ./src:/var/www/html:ro
-      # Logs do Nginx
-      - ./docker/logs/nginx:/var/log/nginx
-      # Configuração do Nginx
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      # SSL certificates (se tiver)
-      - ./docker/ssl:/etc/nginx/ssl:ro
-    networks:
-      - cms_network
-    depends_on:
-      - app
-    healthcheck:
-      test: ["CMD", "nginx", "-t"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  # Servidor Web (Nginx) - removido, app já tem Nginx embutido
+  # web:
+  #   image: nginx:stable-alpine
+  #   container_name: new-cms-web
+  #   restart: always
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"  # Para SSL
+  #   volumes:
+  #     # Código fonte (read-only por segurança)
+  #     - ./src:/var/www/html:ro
+  #     # Logs do Nginx
+  #     - ./docker/logs/nginx:/var/log/nginx
+  #     # Configuração do Nginx
+  #     - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+  #     # SSL certificates (se tiver)
+  #     - ./docker/ssl:/etc/nginx/ssl:ro
+  #   networks:
+  #     - cms_network
+  #   depends_on:
+  #     - app
+  #   healthcheck:
+  #     test: ["CMD", "nginx", "-t"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
 
   # Banco de Dados MySQL
   db:
