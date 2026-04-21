@@ -9,8 +9,8 @@ COPY src/package*.json ./
 # Mostra versões
 RUN node -v && npm -v
 
-# Instala dependências com verbose para ver erros
-RUN npm install --verbose
+# Instala dependências
+RUN npm install
 
 # Copia todo o código fonte
 COPY src/ .
@@ -25,9 +25,8 @@ RUN echo "=== Verificando estrutura de arquivos ===" && \
     echo "=== Verificando Pages ===" && \
     ls -la resources/js/Pages/ || echo "Pages NÃO ENCONTRADO!"
 
-# Faz o build com verbose
-RUN echo "=== Executando build ===" && \
-    npm run build --verbose
+# Faz o build
+RUN npm run build
 
 # Verifica se o build foi gerado
 RUN echo "=== Verificando resultado do build ===" && \
