@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile
     container_name: new-cms-app
     restart: always
-    ports:
-      - "80:80"
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
