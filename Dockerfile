@@ -8,7 +8,7 @@ RUN npm install
 
 COPY src/ .
 
-RUN npm run build
+RUN npm run build 2>&1
 
 FROM php:8.3-fpm-alpine
 
