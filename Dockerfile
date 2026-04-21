@@ -1,18 +1,20 @@
-# Dockerfile corrigido
+# ESTÁGIO 1: Build do front-end (Vue)
+FROM node:18-alpine AS frontend
+
+WORKDIR /app
+
+# Copia arquivos de dependência do Node
+COPY src/package*.json ./
+
+# Instala dependências e faz o build
+RUN npm ci --no-audit --no-fund && npm run build
+
+# ESTÁGIO 2: PHP com Nginx
 FROM php:8.3-fpm-alpine
 
-# Instala dependências do sistema (mantém igual)
-RUN apk add --no-cache \
-    nginx \
-    nodejs \
-    npm --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/main \
-    curl \
-    git \
-    unzip \
-    libzip-dev \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
+# Instala Nginx e extensões do PHP
+RUN apk add --no-cache nginx curl git unzip \
+    libzip-dev libpng-dev libjpeg-turbo-dev freetype-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) pdo_mysql zip gd
 
@@ -21,40 +23,35 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# 1. Copia arquivos de dependência
+# Copia arquivos de dependência PHP
 COPY src/composer.json src/composer.lock* ./
-COPY src/package*.json ./
 
-# 2. Instala dependências
+# Instala dependências PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
-RUN npm ci --production --no-audit --no-fund || npm install --production --no-audit --no-fund
 
-# 3. Copia TODO o código (incluindo artisan)
+# Copia o resto do código PHP
 COPY src/ .
 
-# 4. Agora sim, executa comandos do Artisan
-RUN php artisan package:discover --ansi
-RUN php artisan config:cache
-RUN php artisan route:cache
-RUN php artisan view:cache
+# Copia os assets buildados do estágio frontend
+COPY --from=frontend /app/public/build /var/www/html/public/build
 
-RUN node -v && npm -v
-# 5. Build do Vue
-RUN npm run build
+# Executa scripts do Laravel
+RUN php artisan package:discover --ansi \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
-# 6. Configuração do Nginx e permissões (mantém igual)
+# Configura Nginx
 RUN rm -rf /etc/nginx/conf.d/default.conf
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 
+# Prepara pastas
 RUN mkdir -p storage/framework/sessions \
     && mkdir -p storage/framework/views \
     && mkdir -p storage/framework/cache \
     && mkdir -p bootstrap/cache \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
-
-# Remove node_modules para reduzir tamanho
-RUN rm -rf node_modules
 
 EXPOSE 80
 
